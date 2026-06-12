@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/brand_guidelines/*
+!data/brand_guidelines/.gitkeep
+data/competitor_assets/*
+!data/competitor_assets/.gitkeep
+data/samples/*
+!data/samples/.gitkeep
