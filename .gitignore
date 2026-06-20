@@ -9,3 +9,12 @@ data/competitor_assets/*
 !data/competitor_assets/.gitkeep
 data/samples/*
 !data/samples/.gitkeep
+node_modules/
+ui/node_modules/
+.chroma_db/
+data/projects/
+data/projects.json
+data/temp/
+ui/dist/
+ui/.env*
+*.spec.pdf

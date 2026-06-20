@@ -1,1 +1,17 @@
 python-dotenv>=1.0.0
+langchain
+langchain-google-genai
+langchain-community
+chromadb
+pypdf
+google-generativeai
+pydantic
+pillow
+langgraph
+fastapi
+uvicorn
+python-multipart
+openai
+langchain-openai
+beautifulsoup4
+requests

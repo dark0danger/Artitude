@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-artitude-red: #CC0000;
+  --color-artitude-blush: #FDEDEC;
+  --color-artitude-canvas: #FAFAF8;
+  --color-artitude-text: #1A1A1A;
+  --color-artitude-muted: #64748B;
+
+  --font-sans: 'General Sans', Inter, sans-serif;
+  --font-serif: 'Fraunces', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-artitude-canvas);
+    color: var(--color-artitude-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

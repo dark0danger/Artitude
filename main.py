@@ -1,10 +1,13 @@
 import argparse
+import os
 import sys
 from src.config import config
 
 def ingest(args):
     print(f"Ingesting source: {args.source}")
-    print("Not implemented yet.")
+    from src.ingestion.build_index import build_index
+    project_id = os.path.basename(os.path.normpath(args.source))
+    build_index(args.source, project_id)
 
 def query(args):
     print(f"Querying text: {args.text}")
@@ -12,11 +15,25 @@ def query(args):
 
 def analyze(args):
     print(f"Analyzing image: {args.image}")
-    print("Not implemented yet.")
+    from src.vision.analyzer import analyze_asset
+    result = analyze_asset(args.image)
+    print(result.model_dump_json(indent=2))
 
 def run(args):
     print(f"Running pipeline with query: '{args.query}' and image: '{args.image}'")
-    print("Not implemented yet.")
+    from src.agents.graph import graph
+    
+    state = {
+        "query": args.query,
+        "image_path": args.image,
+        "recursion_count": 0
+    }
+    
+    # langgraph handles recursion limits in the config
+    final_state = graph.invoke(state, config={"recursion_limit": 50})
+    
+    print("\n--- Final Report ---")
+    print(final_state.get("raw_synthesis"))
 
 def export(args):
     print(f"Exporting request ID: {args.request_id} to format: {args.format}")
@@ -26,8 +43,13 @@ def validate(args):
     print(f"Validating against golden set: {args.golden_set}")
     print("Not implemented yet.")
 
+def serve(args):
+    import uvicorn
+    print("Starting FastAPI server...")
+    uvicorn.run("src.api.app:app", host="127.0.0.1", port=8000, reload=True)
+
 def main():
-    parser = argparse.ArgumentParser(description="Autonomous Brand Identity & Competitive Intelligence Agent CLI")
+    parser = argparse.ArgumentParser(description="Artitude CLI - brand intelligence & design review tool")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Ingest command
@@ -58,9 +80,13 @@ def main():
     parser_export.set_defaults(func=export)
 
     # Validate command
-    parser_validate = subparsers.add_parser("validate", help="Validate system against golden fixtures")
-    parser_validate.add_argument("--golden-set", required=True, help="Path to golden set JSON")
+    parser_validate = subparsers.add_parser("validate", help="Validate system metrics against golden set")
+    parser_validate.add_argument("--golden-set", required=True, help="Path to golden set CSV")
     parser_validate.set_defaults(func=validate)
+    
+    # Serve command
+    parser_serve = subparsers.add_parser("serve", help="Start the FastAPI server")
+    parser_serve.set_defaults(func=serve)
 
     args = parser.parse_args()
     args.func(args)
