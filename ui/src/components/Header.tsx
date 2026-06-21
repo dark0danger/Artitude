@@ -23,14 +23,7 @@ const navItems = [
   { id: 'guide', label: 'What is Artitude', requiresProject: false },
 ];
 
-const navTooltips: Record<string, { label: string; desc: string }> = {
-  projects: { label: "Campaigns Overview", desc: "View and configure all brand intelligence campaigns." },
-  dashboard: { label: "Brand Dashboard", desc: "Analyze consistency score trends and critical brand stats." },
-  workspace: { label: "Design Critique", desc: "Upload asset mockups and request real-time AI compliance feedback." },
-  guidelines: { label: "Guidelines Manager", desc: "Ingest and structure PDF/text style guidelines for AI compliance." },
-  competitors: { label: "Competitor Tracker", desc: "Scrape competitor sites and index their colors and typefaces." },
-  guide: { label: "Guide & Workflow", desc: "Learn how to use Artitude in your daily design process." },
-};
+
 
 export const Header: React.FC<HeaderProps> = ({
   activeView,
@@ -76,7 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
             if (hasActiveProject && item.id === 'guide') return null;
 
             const isActive = activeView === item.id;
-            const tool = navTooltips[item.id] || { label: item.label, desc: "" };
 
             return (
               <div key={item.id} className="relative py-2 shrink-0">
