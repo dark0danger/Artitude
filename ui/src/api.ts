@@ -1,5 +1,14 @@
 
 
+/** Read the user's AI provider settings from localStorage. */
+export function getAISettings(): { ai_provider: string; ai_api_key: string } {
+  const provider = localStorage.getItem('artitude_ai_provider') || 'gpt4o';
+  const key = provider === 'gemini'
+    ? localStorage.getItem('artitude_gemini_key') || ''
+    : localStorage.getItem('artitude_gpt4o_key') || '';
+  return { ai_provider: provider, ai_api_key: key };
+}
+
 export interface ConsistencyFinding {
   element: string;
   status: 'consistent' | 'inconsistent' | 'needs_attention';
@@ -85,8 +94,11 @@ export interface Project {
   created_at: string;
 }
 
+// Define hosted Hugging Face Space URL here
+const BASE_URL = "https://david0dods-artitude-backend.hf.space";
+
 export const createProject = async (name: string): Promise<Project> => {
-  const res = await fetch('/api/projects', {
+  const res = await fetch(`${BASE_URL}/api/projects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -96,7 +108,7 @@ export const createProject = async (name: string): Promise<Project> => {
 };
 
 export const renameProject = async (projectId: string, newName: string): Promise<Project> => {
-  const res = await fetch(`/api/projects/${projectId}`, {
+  const res = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: newName }),
@@ -106,29 +118,29 @@ export const renameProject = async (projectId: string, newName: string): Promise
 };
 
 export const deleteProject = async (projectId: string): Promise<void> => {
-  const res = await fetch(`/api/projects/${projectId}`, {
+  const res = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('Failed to delete project');
 };
 
 export async function fetchProjects(): Promise<Project[]> {
-  const response = await fetch('/api/projects');
+  const response = await fetch(`${BASE_URL}/api/projects`);
   if (!response.ok) throw new Error('Failed to fetch projects');
   const data = await response.json();
   return data.projects;
 }
 
 export async function analyzeRequest(
-  projectId: string, 
-  query: string, 
-  file: File | null, 
+  projectId: string,
+  query: string,
+  file: File | null,
   threadId: string | undefined,
   onToken: (token: string) => void,
   onFinal: (data: AnalysisResponse) => void
 ): Promise<void> {
   if (!projectId) throw new Error('No active project selected.');
-  
+
   const formData = new FormData();
   formData.append('query', query);
   if (file) {
@@ -138,9 +150,16 @@ export async function analyzeRequest(
     formData.append('thread_id', threadId);
   }
 
+  // AI provider settings
+  const aiSettings = getAISettings();
+  formData.append('ai_provider', aiSettings.ai_provider);
+  if (aiSettings.ai_api_key) {
+    formData.append('ai_api_key', aiSettings.ai_api_key);
+  }
+
   let response: Response;
   try {
-    response = await fetch(`/api/projects/${projectId}/analyze`, {
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/analyze`, {
       method: 'POST',
       body: formData,
     });
@@ -191,7 +210,6 @@ export async function analyzeRequest(
             throw new Error(parsed.error);
           }
         } catch (e) {
-          // JSON parse error or explicitly thrown error from backend
           if (e instanceof Error && e.message !== "Unexpected end of JSON input") {
             throw e;
           }
@@ -207,9 +225,16 @@ export async function ingestGuideline(projectId: string, file: File): Promise<{ 
   const formData = new FormData();
   formData.append('file', file);
 
+  // AI provider settings
+  const aiSettings = getAISettings();
+  formData.append('ai_provider', aiSettings.ai_provider);
+  if (aiSettings.ai_api_key) {
+    formData.append('ai_api_key', aiSettings.ai_api_key);
+  }
+
   let response: Response;
   try {
-    response = await fetch(`/api/projects/${projectId}/ingest`, {
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/ingest`, {
       method: 'POST',
       body: formData,
     });
@@ -241,7 +266,7 @@ export async function fetchGuidelines(projectId: string): Promise<GuidelineFile[
 
   let response: Response;
   try {
-    response = await fetch(`/api/projects/${projectId}/guidelines`);
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/guidelines`);
   } catch (err) {
     throw new Error('Failed to connect to the server. Make sure the backend is running.');
   }
@@ -267,7 +292,7 @@ export async function fetchGuidelines(projectId: string): Promise<GuidelineFile[
 }
 
 export async function deleteGuideline(projectId: string, filename: string): Promise<void> {
-  const response = await fetch(`/api/projects/${projectId}/guidelines/${encodeURIComponent(filename)}`, {
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/guidelines/${encodeURIComponent(filename)}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -285,7 +310,7 @@ export async function deleteGuideline(projectId: string, filename: string): Prom
 
 export async function fetchBrandKit(projectId: string): Promise<BrandKit | null> {
   if (!projectId) return null;
-  const response = await fetch(`/api/projects/${projectId}/brand_kit`);
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/brand_kit`);
   if (!response.ok) {
     if (response.status === 404) return null;
     throw new Error('Failed to fetch brand kit');
@@ -300,7 +325,7 @@ export async function fetchBrandKit(projectId: string): Promise<BrandKit | null>
 
 export async function fetchCompetitors(projectId: string): Promise<CompetitorKit[]> {
   if (!projectId) return [];
-  const response = await fetch(`/api/projects/${projectId}/competitors`);
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/competitors`);
   if (!response.ok) {
     if (response.status === 404) return [];
     throw new Error('Failed to fetch competitors');
@@ -314,10 +339,11 @@ export async function fetchCompetitors(projectId: string): Promise<CompetitorKit
 }
 
 export async function scrapeWebsite(projectId: string, url: string): Promise<{ warning?: string }> {
-  const response = await fetch(`/api/projects/${projectId}/scrape`, {
+  const aiSettings = getAISettings();
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/scrape`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, ...aiSettings }),
   });
   if (!response.ok) {
     throw new Error('Failed to scrape website');
@@ -326,7 +352,7 @@ export async function scrapeWebsite(projectId: string, url: string): Promise<{ w
 }
 
 export async function resetDatabase(projectId: string): Promise<void> {
-  const response = await fetch(`/api/projects/${projectId}/reset-db`, {
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/reset-db`, {
     method: 'POST',
   });
   if (!response.ok) {
@@ -334,26 +360,12 @@ export async function resetDatabase(projectId: string): Promise<void> {
   }
 }
 
-export interface DashboardStats {
-  active_guidelines: number;
-  designs_reviewed: number;
-  enhancements_suggested: number;
-  brand_health_score: number;
-  recent_scores?: number[];
-  last_review?: {
-    filename: string;
-    top_issue: string;
-    timestamp: number;
-    review_id: string;
-  } | null;
-}
-
 export async function fetchStats(projectId: string): Promise<DashboardStats> {
   if (!projectId) throw new Error('No active project selected.');
 
   let response: Response;
   try {
-    response = await fetch(`/api/projects/${projectId}/stats`);
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/stats`);
   } catch (err) {
     throw new Error('Failed to connect to the server. Make sure the backend is running.');
   }
