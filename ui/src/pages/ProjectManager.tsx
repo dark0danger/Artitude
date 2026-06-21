@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchProjects, createProject, renameProject, deleteProject, type Project } from '../api';
 import { CropMarks } from '../components/CropMarks';
+import { Tooltip } from '../components/Tooltip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -105,15 +106,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
               className="flex-1 px-0 py-4 bg-transparent border-b-2 border-gray-200 focus:border-artitude-red outline-none transition-colors text-xl font-medium text-artitude-text placeholder:text-gray-300"
               disabled={isCreating}
             />
-            <motion.button
-              whileHover={{ scale: 1.02, backgroundColor: "var(--color-artitude-redDark)" }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={isCreating || !newProjectName.trim()}
-              className="px-10 py-4 bg-artitude-red text-white font-bold text-lg uppercase tracking-wider transition-colors disabled:opacity-50 disabled:hover:bg-artitude-red"
-            >
-              {isCreating ? 'CREATING...' : 'CREATE PROJECT'}
-            </motion.button>
+            <Tooltip content="Create Campaign" description="Generate a new isolated project database and guidelines store.">
+              <motion.button
+                whileHover={{ scale: 1.02, backgroundColor: "var(--color-artitude-redDark)" }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isCreating || !newProjectName.trim()}
+                className="px-10 py-4 bg-artitude-red text-white font-bold text-lg uppercase tracking-wider transition-colors disabled:opacity-50 disabled:hover:bg-artitude-red"
+              >
+                {isCreating ? 'CREATING...' : 'CREATE PROJECT'}
+              </motion.button>
+            </Tooltip>
           </form>
         </motion.div>
 
@@ -141,20 +144,24 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
                   CREATED {new Date(project.created_at).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => handleRename(e, project.id, project.name)}
-                    className="p-2 text-artitude-text hover:text-artitude-red hover:bg-red-50 rounded"
-                    title="Rename Project"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                  <button 
-                    onClick={(e) => handleDelete(e, project.id, project.name)}
-                    className="p-2 text-artitude-text hover:text-red-600 hover:bg-red-50 rounded"
-                    title="Delete Project"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                  </button>
+                  <Tooltip content="Rename Campaign" description="Change the display name of this campaign.">
+                    <button 
+                      onClick={(e) => handleRename(e, project.id, project.name)}
+                      className="p-2 text-artitude-text hover:text-artitude-red hover:bg-red-50 rounded"
+                      title="Rename Project"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete Campaign" description="Permanently delete all reviews, assets, and guidelines associated with this project.">
+                    <button 
+                      onClick={(e) => handleDelete(e, project.id, project.name)}
+                      className="p-2 text-artitude-text hover:text-red-600 hover:bg-red-50 rounded"
+                      title="Delete Project"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </motion.div>

@@ -8,6 +8,8 @@ import { Guide } from './pages/Guide';
 import { ProjectManager } from './pages/ProjectManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AIProvider } from './components/AISettingsPanel';
+import { fetchCurrentUser, removeAuthToken, getAuthToken } from './api';
+import { Auth } from './pages/Auth';
 
 type ViewType = 'dashboard' | 'workspace' | 'guidelines' | 'competitors' | 'guide' | 'projects';
 
@@ -16,6 +18,8 @@ function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // AI settings — initialized from localStorage
   const [aiProvider, setAIProvider] = useState<AIProvider>(
@@ -29,12 +33,39 @@ function App() {
   );
 
   useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      fetchCurrentUser()
+        .then((user) => {
+          setCurrentUser(user.username);
+          setAuthLoading(false);
+        })
+        .catch(() => {
+          setAuthLoading(false);
+        });
+    } else {
+      setAuthLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
     // dismiss the splash screen after 4s
     const timer = setTimeout(() => {
       setShowWelcome(false);
     }, 4000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleLoginSuccess = (username: string) => {
+    setCurrentUser(username);
+  };
+
+  const handleLogout = () => {
+    removeAuthToken();
+    setCurrentUser(null);
+    setActiveProjectId(null);
+    setActiveView('projects');
+  };
 
   const handleSelectProject = (projectId: string | null) => {
     setActiveProjectId(projectId);
@@ -77,6 +108,23 @@ function App() {
       component: <Guide />
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-artitude-canvas">
+        <motion.div 
+          animate={{ rotate: 360 }} 
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-gray-200 border-t-artitude-red rounded-full mb-4"
+        />
+        <span className="text-xs font-mono text-gray-400 uppercase tracking-widest">Verifying Session...</span>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Auth onLoginSuccess={handleLoginSuccess} />;
+  }
 
   const currentView = viewConfig[activeView] || viewConfig['projects'];
 
@@ -136,6 +184,8 @@ function App() {
         onGptKeyChange={setGptKey}
         geminiKey={geminiKey}
         onGeminiKeyChange={setGeminiKey}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       >
         {currentView.component}
       </AppLayout>

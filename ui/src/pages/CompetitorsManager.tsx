@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { scrapeWebsite, fetchCompetitors } from '../api';
 import type { CompetitorKit } from '../api';
 import { CropMarks } from '../components/CropMarks';
+import { Tooltip } from '../components/Tooltip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -90,13 +91,15 @@ export const CompetitorsManager: React.FC<CompetitorsManagerProps> = ({ projectI
               onKeyDown={e => e.key === 'Enter' && handleScrape()}
               className="flex-1 p-4 bg-gray-50 border border-gray-200 outline-none focus:border-artitude-text focus:ring-1 focus:ring-artitude-text transition-all font-mono"
             />
-            <button
-              onClick={handleScrape}
-              disabled={isScraping || !competitorUrl}
-              className={`px-8 py-4 bg-artitude-text text-white font-bold uppercase tracking-widest text-sm transition-all ${isScraping || !competitorUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
-            >
-              {isScraping ? 'Scraping...' : 'Scrape & Extract'}
-            </button>
+            <Tooltip content="Extract Identity" description="Analyze the website assets of the competitor and compile their brand guidelines.">
+              <button
+                onClick={handleScrape}
+                disabled={isScraping || !competitorUrl}
+                className={`px-8 py-4 bg-artitude-text text-white font-bold uppercase tracking-widest text-sm transition-all ${isScraping || !competitorUrl ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
+              >
+                {isScraping ? 'Scraping...' : 'Scrape & Extract'}
+              </button>
+            </Tooltip>
           </div>
 
           {/* Loading overlay */}
@@ -154,15 +157,17 @@ export const CompetitorsManager: React.FC<CompetitorsManagerProps> = ({ projectI
                           <h4 className="text-2xl font-fraunces font-bold text-artitude-text tracking-wide group-hover:text-artitude-red transition-colors">
                             {comp.name || 'Unknown Competitor'}
                           </h4>
-                          <a
-                            href={comp.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs font-mono text-artitude-muted hover:text-artitude-red hover:underline transition-colors"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            {comp.url}
-                          </a>
+                          <Tooltip content="Visit Site" description="Open the competitor's website homepage in a new browser tab.">
+                            <a
+                              href={comp.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs font-mono text-artitude-muted hover:text-artitude-red hover:underline transition-colors"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              {comp.url}
+                            </a>
+                          </Tooltip>
                         </div>
                       </div>
 

@@ -4,6 +4,7 @@ import { UploadDropzone } from '../components/UploadDropzone';
 import { Toast } from '../components/Toast';
 import type { AnalysisResponse } from '../api';
 import { analyzeRequest, fetchGuidelines } from '../api';
+import { Tooltip } from '../components/Tooltip';
 
 interface AnalysisWorkspaceProps {
   projectId: string;
@@ -189,26 +190,30 @@ export const AnalysisWorkspace: React.FC<AnalysisWorkspaceProps> = ({ projectId 
           </div>
 
           <div className="flex flex-col gap-4">
-            <motion.button
-              onClick={() => handleAnalyze(false)}
-              disabled={isLoading || !file}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-5 bg-artitude-text text-white text-lg font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'ANALYZING...' : 'REVIEW DESIGN'}
-            </motion.button>
-
-            {finalReviewData && (
+            <Tooltip content="Analyze Design" description="Submit the current design mockup to run full AI visual checks and consistency reviews.">
               <motion.button
-                onClick={() => handleAnalyze(true)}
+                onClick={() => handleAnalyze(false)}
                 disabled={isLoading || !file}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-5 bg-white border-2 border-artitude-red text-artitude-red text-lg font-bold tracking-widest uppercase hover:bg-red-50 transition-colors disabled:opacity-50"
+                className="w-full py-5 bg-artitude-text text-white text-lg font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors disabled:opacity-50"
               >
-                SUBMIT V2 REVISION
+                {isLoading ? 'ANALYZING...' : 'REVIEW DESIGN'}
               </motion.button>
+            </Tooltip>
+
+            {finalReviewData && (
+              <Tooltip content="Submit Revision" description="Analyze the updated layout within the same conversation thread to retain AI assistant memory.">
+                <motion.button
+                  onClick={() => handleAnalyze(true)}
+                  disabled={isLoading || !file}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-5 bg-white border-2 border-artitude-red text-artitude-red text-lg font-bold tracking-widest uppercase hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  SUBMIT V2 REVISION
+                </motion.button>
+              </Tooltip>
             )}
           </div>
         </div>

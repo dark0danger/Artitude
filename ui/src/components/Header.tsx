@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Tooltip } from './Tooltip';
 
 interface HeaderProps {
   activeView: string;
@@ -8,6 +9,8 @@ interface HeaderProps {
   onClearProject: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  currentUser: string | null;
+  onLogout: () => void;
 }
 
 const navItems = [
@@ -19,7 +22,25 @@ const navItems = [
   { id: 'guide', label: 'What is Artitude', requiresProject: false },
 ];
 
-export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiveProject, onClearProject, searchQuery, onSearchChange }) => {
+const navTooltips: Record<string, { label: string; desc: string }> = {
+  projects: { label: "Campaigns Overview", desc: "View and configure all brand intelligence campaigns." },
+  dashboard: { label: "Brand Dashboard", desc: "Analyze consistency score trends and critical brand stats." },
+  workspace: { label: "Design Critique", desc: "Upload asset mockups and request real-time AI compliance feedback." },
+  guidelines: { label: "Guidelines Manager", desc: "Ingest and structure PDF/text style guidelines for AI compliance." },
+  competitors: { label: "Competitor Tracker", desc: "Scrape competitor sites and index their colors and typefaces." },
+  guide: { label: "Guide & Workflow", desc: "Learn how to use Artitude in your daily design process." },
+};
+
+export const Header: React.FC<HeaderProps> = ({ 
+  activeView, 
+  onNavigate, 
+  hasActiveProject, 
+  onClearProject, 
+  searchQuery, 
+  onSearchChange,
+  currentUser,
+  onLogout
+}) => {
   return (
     <header className="sticky top-0 z-30 bg-artitude-canvas/90 backdrop-blur-sm border-b border-[#1A1A1A]/10">
       <div className="flex items-center px-10 py-4 h-20 max-w-[1600px] mx-auto w-full gap-10">
@@ -35,16 +56,18 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
           {/* Back to Projects button — inline with nav tabs */}
           {hasActiveProject && (
             <div className="relative py-2 shrink-0">
-              <button
-                onClick={onClearProject}
-                className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
-                title="Back to Projects"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                Projects
-              </button>
+              <Tooltip content="Back to Projects" description="Exit current campaign and return to the main campaigns selector.">
+                <button
+                  onClick={onClearProject}
+                  className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
+                  title="Back to Projects"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Projects
+                </button>
+              </Tooltip>
             </div>
           )}
           {navItems.map((item) => {
@@ -53,16 +76,20 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
             if (hasActiveProject && item.id === 'guide') return null;
 
             const isActive = activeView === item.id;
+            const tool = navTooltips[item.id] || { label: item.label, desc: "" };
+
             return (
               <div key={item.id} className="relative py-2 shrink-0">
-                <button
-                  onClick={() => onNavigate(item.id)}
-                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
-                    isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
-                  }`}
-                >
-                  {item.label}
-                </button>
+                <Tooltip content={tool.label} description={tool.desc}>
+                  <button
+                    onClick={() => onNavigate(item.id)}
+                    className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
+                      isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                </Tooltip>
                 {isActive && (
                   <motion.div
                     layoutId="activeNavIndicator"
@@ -76,14 +103,40 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
 
           {/* Search — fixed width */}
           <div className="relative w-72 shrink-0">
-            <input
-              type="text"
-              placeholder="Type to search..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
-            />
+            <Tooltip content="Search Filter" description="Filter the active list by name or metadata properties.">
+              <input
+                type="text"
+                placeholder="Type to search..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
+              />
+            </Tooltip>
           </div>
+
+          {/* User Profile & Logout */}
+          {currentUser && (
+            <div className="flex items-center gap-3 pl-4 border-l border-[#1A1A1A]/10 shrink-0 ml-auto">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-general font-bold text-artitude-text truncate max-w-24 leading-none mb-0.5">
+                  {currentUser}
+                </span>
+                <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest leading-none">
+                  Authenticated
+                </span>
+              </div>
+              <Tooltip content="Sign Out" description="Terminate your active session and return to the login interface.">
+                <button
+                  onClick={onLogout}
+                  className="w-8 h-8 rounded-full border border-artitude-text/10 text-artitude-muted hover:text-artitude-red hover:border-artitude-red/20 flex items-center justify-center transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+                  </svg>
+                </button>
+              </Tooltip>
+            </div>
+          )}
         </nav>
       </div>
     </header>

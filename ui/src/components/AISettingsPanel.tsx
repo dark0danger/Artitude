@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Tooltip } from './Tooltip';
 
 export type AIProvider = 'gpt4o' | 'gemini';
 
@@ -69,26 +70,30 @@ export const AISettingsPanel: React.FC<AISettingsPanelProps> = ({
 
         {/* Provider Toggle */}
         <div className="flex bg-[#F5F5F3] rounded-xl p-0.5 gap-0.5 shrink-0">
-          <button
-            onClick={() => onProviderChange('gpt4o')}
-            className={`py-1.5 px-4 rounded-[10px] text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 ${
-              provider === 'gpt4o'
-                ? 'bg-white text-artitude-text shadow-sm'
-                : 'text-artitude-muted hover:text-artitude-text'
-            }`}
-          >
-            GPT-4o
-          </button>
-          <button
-            onClick={() => onProviderChange('gemini')}
-            className={`py-1.5 px-4 rounded-[10px] text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 ${
-              provider === 'gemini'
-                ? 'bg-white text-artitude-text shadow-sm'
-                : 'text-artitude-muted hover:text-artitude-text'
-            }`}
-          >
-            Gemini
-          </button>
+          <Tooltip content="GPT-4o Engine" description="Select OpenAI's GPT-4o model. Highly precise for evaluating strict design clearance rules.">
+            <button
+              onClick={() => onProviderChange('gpt4o')}
+              className={`py-1.5 px-4 rounded-[10px] text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 ${
+                provider === 'gpt4o'
+                  ? 'bg-white text-artitude-text shadow-sm'
+                  : 'text-artitude-muted hover:text-artitude-text'
+              }`}
+            >
+              GPT-4o
+            </button>
+          </Tooltip>
+          <Tooltip content="Gemini Engine" description="Select Google's Gemini model. Exceptionally capable at general multimodal visual design reasoning.">
+            <button
+              onClick={() => onProviderChange('gemini')}
+              className={`py-1.5 px-4 rounded-[10px] text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 ${
+                provider === 'gemini'
+                  ? 'bg-white text-artitude-text shadow-sm'
+                  : 'text-artitude-muted hover:text-artitude-text'
+              }`}
+            >
+              Gemini
+            </button>
+          </Tooltip>
         </div>
 
         {/* Divider */}
@@ -106,37 +111,41 @@ export const AISettingsPanel: React.FC<AISettingsPanelProps> = ({
             placeholder={provider === 'gpt4o' ? 'sk-... or github_pat_...' : 'AIza...'}
             className="w-full bg-[#F5F5F3] rounded-xl px-3 py-2 pr-9 text-xs font-mono text-artitude-text placeholder:text-gray-300 outline-none border border-transparent focus:border-artitude-red/20 transition-colors"
           />
-          <button
-            onClick={() => setShowKey(!showKey)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-artitude-muted hover:text-artitude-text transition-colors"
-            tabIndex={-1}
-          >
-            {showKey ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
-          </button>
+          <Tooltip content="Toggle Masking" description="Toggle masking of your API key text.">
+            <button
+              onClick={() => setShowKey(!showKey)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-artitude-muted hover:text-artitude-text transition-colors"
+              tabIndex={-1}
+            >
+              {showKey ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+          </Tooltip>
         </div>
 
         {/* Save Button */}
-        <button
-          onClick={handleSave}
-          className={`px-5 py-2 rounded-xl text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 shrink-0 ${
-            saved
-              ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20'
-              : 'bg-artitude-text text-white hover:bg-artitude-text/85'
-          }`}
-        >
-          {saved ? '✓ Saved' : 'Save'}
-        </button>
+        <Tooltip content="Save Credentials" description="Save the credentials locally in your browser to override default server keys.">
+          <button
+            onClick={handleSave}
+            className={`px-5 py-2 rounded-xl text-[10px] tracking-wider font-general font-semibold uppercase transition-all duration-300 shrink-0 ${
+              saved
+                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20'
+                : 'bg-artitude-text text-white hover:bg-artitude-text/85'
+            }`}
+          >
+            {saved ? '✓ Saved' : 'Save'}
+          </button>
+        </Tooltip>
       </div>
     </motion.div>
   );

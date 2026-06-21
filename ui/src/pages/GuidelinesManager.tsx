@@ -4,6 +4,7 @@ import { CropMarks } from '../components/CropMarks';
 import { fetchGuidelines, ingestGuideline, fetchBrandKit, deleteGuideline } from '../api';
 import type { BrandKit } from '../api';
 import { UploadDropzone } from '../components/UploadDropzone';
+import { Tooltip } from '../components/Tooltip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -136,15 +137,17 @@ export const GuidelinesManager: React.FC<GuidelinesManagerProps> = ({ projectId 
                   <div className="text-artitude-red font-mono text-xs uppercase tracking-widest">
                     [ INDEXED ]
                   </div>
-                  <button
-                    onClick={() => requestDelete(g.filename)}
-                    className="text-artitude-muted hover:text-artitude-red transition-colors"
-                    title="Delete Guideline"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
+                  <Tooltip content="Delete Guideline" description="Permanently remove this guideline file and update the brand kit compliance index.">
+                    <button
+                      onClick={() => requestDelete(g.filename)}
+                      className="text-artitude-muted hover:text-artitude-red transition-colors"
+                      title="Delete Guideline"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
                 </div>
               </motion.div>
             ))}
@@ -244,18 +247,22 @@ export const GuidelinesManager: React.FC<GuidelinesManagerProps> = ({ projectId 
               Are you sure you want to permanently delete <span className="font-mono text-artitude-red font-bold">{itemToDelete}</span>? This may mark the auto-generated Brand Kit as stale.
             </p>
             <div className="flex gap-4 justify-end mt-8 border-t border-[#1A1A1A]/10 pt-6">
-              <button 
-                onClick={cancelDelete}
-                className="px-6 py-3 border border-[#1A1A1A]/10 text-artitude-text font-general font-medium uppercase tracking-widest text-xs hover:bg-[#1A1A1A]/5 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={confirmDelete}
-                className="px-6 py-3 bg-artitude-red text-white font-general font-medium uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
-              >
-                Delete File
-              </button>
+              <Tooltip content="Cancel" description="Close this dialog and keep the guideline file intact.">
+                <button 
+                  onClick={cancelDelete}
+                  className="px-6 py-3 border border-[#1A1A1A]/10 text-artitude-text font-general font-medium uppercase tracking-widest text-xs hover:bg-[#1A1A1A]/5 transition-colors"
+                >
+                  Cancel
+                </button>
+              </Tooltip>
+              <Tooltip content="Delete File" description="Confirm permanent deletion of this Brand Guideline file from the active index.">
+                <button 
+                  onClick={confirmDelete}
+                  className="px-6 py-3 bg-artitude-red text-white font-general font-medium uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
+                >
+                  Delete File
+                </button>
+              </Tooltip>
             </div>
           </motion.div>
         </div>

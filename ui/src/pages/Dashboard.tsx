@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { fetchStats, fetchBrandKit, type DashboardStats, type BrandKit } from '../api';
 import { CropMarks } from '../components/CropMarks';
+import { Tooltip } from '../components/Tooltip';
 
 const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
   const count = useMotionValue(0);
@@ -59,14 +60,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
             <h2 className="text-5xl font-fraunces font-bold text-artitude-text tracking-normal">Brand Consistency & <br /><span className="text-artitude-red font-fraunces font-bold italic">Design Enhancement</span></h2>
             <p className="text-xl text-artitude-muted mt-4 font-general font-light">Your co-pilot for maintaining brand identity and elevating designs.</p>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onNavigate('workspace')}
-            className="bg-artitude-text text-white px-10 py-4 font-general font-medium text-sm tracking-widest hover:bg-black transition-colors"
-          >
-            REVIEW A DESIGN
-          </motion.button>
+          <Tooltip content="Review Workspace" description="Open the design workspace to upload assets for automated AI brand compliance review.">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onNavigate('workspace')}
+              className="bg-artitude-text text-white px-10 py-4 font-general font-medium text-sm tracking-widest hover:bg-black transition-colors"
+            >
+              REVIEW A DESIGN
+            </motion.button>
+          </Tooltip>
         </motion.div>
 
         {/* Actionable Cards */}

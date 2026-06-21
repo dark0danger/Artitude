@@ -3,8 +3,12 @@ import shutil
 import traceback
 import json
 import uuid
+import base64
+import hmac
+import hashlib
+import time
 from datetime import datetime
-from fastapi import FastAPI, Form, File, UploadFile, HTTPException
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, List
@@ -48,15 +52,70 @@ async def global_exception_handler(request, exc):
 async def health_check():
     return {"status": "ok"}
 
+# Authentication configuration & utilities
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-artitude-change-me-in-prod")
+
+def encode_jwt(payload: dict, secret: str = JWT_SECRET_KEY, algorithm: str = "HS256") -> str:
+    header = {"alg": algorithm, "typ": "JWT"}
+    header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
+    payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+    signature_input = f"{header_b64}.{payload_b64}".encode()
+    if algorithm == "HS256":
+        signature = hmac.new(secret.encode(), signature_input, hashlib.sha256).digest()
+    else:
+        raise ValueError("Unsupported algorithm")
+    signature_b64 = base64.urlsafe_b64encode(signature).decode().rstrip("=")
+    return f"{header_b64}.{payload_b64}.{signature_b64}"
+
+def decode_jwt(token: str, secret: str = JWT_SECRET_KEY) -> dict:
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            raise ValueError("Invalid token structure")
+        header_b64, payload_b64, signature_b64 = parts
+        signature_input = f"{header_b64}.{payload_b64}".encode()
+        def pad(s):
+            return s + "=" * (4 - len(s) % 4)
+        expected_sig = hmac.new(secret.encode(), signature_input, hashlib.sha256).digest()
+        expected_sig_b64 = base64.urlsafe_b64encode(expected_sig).decode().rstrip("=")
+        if not hmac.compare_digest(signature_b64.encode(), expected_sig_b64.encode()):
+            raise ValueError("Signature mismatch")
+        payload = json.loads(base64.urlsafe_b64decode(pad(payload_b64)).decode())
+        if "exp" in payload and payload["exp"] < time.time():
+            raise ValueError("Token expired")
+        return payload
+    except Exception:
+        raise ValueError("Invalid token")
+
+def hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return f"{salt.hex()}:{key.hex()}"
+
+def verify_password(stored_password: str, provided_password: str) -> bool:
+    try:
+        salt_hex, key_hex = stored_password.split(":")
+        salt = bytes.fromhex(salt_hex)
+        key = bytes.fromhex(key_hex)
+        new_key = hashlib.pbkdf2_hmac('sha256', provided_password.encode('utf-8'), salt, 100000)
+        return hmac.compare_digest(key, new_key)
+    except Exception:
+        return False
+
 TEMP_DIR = "data/temp"
 PROJECTS_DIR = "data/projects"
 PROJECTS_DB = "data/projects.json"
+USERS_DB = "data/users.json"
 
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(PROJECTS_DIR, exist_ok=True)
 
 class ProjectCreate(BaseModel):
     name: str
+
+class UserAuth(BaseModel):
+    username: str
+    password: str
 
 class BrandKit(BaseModel):
     primary_colors: List[str]
@@ -74,11 +133,56 @@ def get_projects_db():
     if not os.path.exists(PROJECTS_DB):
         return []
     with open(PROJECTS_DB, "r") as f:
-        return json.load(f)
+        try:
+            return json.load(f)
+        except Exception:
+            return []
 
 def save_projects_db(projects):
     with open(PROJECTS_DB, "w") as f:
-        json.dump(projects, f)
+        json.dump(projects, f, indent=2)
+
+def get_users_db():
+    if not os.path.exists(USERS_DB):
+        return []
+    with open(USERS_DB, "r") as f:
+        try:
+            return json.load(f)
+        except Exception:
+            return []
+
+def save_users_db(users):
+    with open(USERS_DB, "w") as f:
+        json.dump(users, f, indent=2)
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = authorization.split(" ")[1]
+    try:
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        users = get_users_db()
+        if not any(u["id"] == user_id for u in users):
+            raise HTTPException(status_code=401, detail="User not found")
+        return user_id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+def verify_project_ownership(project_id: str, user_id: str):
+    projects = get_projects_db()
+    for p in projects:
+        if p["id"] == project_id:
+            if "user_id" not in p:
+                p["user_id"] = user_id
+                save_projects_db(projects)
+            if p["user_id"] == user_id:
+                return p
+            else:
+                raise HTTPException(status_code=403, detail="Not authorized to access this project")
+    raise HTTPException(status_code=404, detail="Project not found")
 
 def get_project_paths(project_id: str):
     base_dir = os.path.join(PROJECTS_DIR, project_id)
@@ -99,13 +203,62 @@ def get_stats(stats_file: str):
     with open(stats_file, "r") as f:
         return json.load(f)
 
+# Auth Endpoints
+@app.post("/api/auth/register")
+async def register_user(data: UserAuth):
+    username_clean = data.username.strip()
+    if len(username_clean) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    users = get_users_db()
+    if any(u["username"].lower() == username_clean.lower() for u in users):
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    user_id = str(uuid.uuid4())
+    new_user = {
+        "id": user_id,
+        "username": username_clean,
+        "password_hash": hash_password(data.password),
+        "created_at": datetime.now().isoformat()
+    }
+    users.append(new_user)
+    save_users_db(users)
+    
+    token = encode_jwt({"sub": user_id, "exp": time.time() + 7 * 24 * 3600})
+    return {"access_token": token, "token_type": "bearer", "username": username_clean}
+
+@app.post("/api/auth/login")
+async def login_user(data: UserAuth):
+    username_clean = data.username.strip()
+    users = get_users_db()
+    for u in users:
+        if u["username"].lower() == username_clean.lower():
+            if verify_password(u["password_hash"], data.password):
+                token = encode_jwt({"sub": u["id"], "exp": time.time() + 7 * 24 * 3600})
+                return {"access_token": token, "token_type": "bearer", "username": u["username"]}
+            break
+            
+    raise HTTPException(status_code=400, detail="Invalid username or password")
+
+@app.get("/api/auth/me")
+async def get_me(user_id: str = Depends(get_current_user)):
+    users = get_users_db()
+    for u in users:
+        if u["id"] == user_id:
+            return {"id": u["id"], "username": u["username"]}
+    raise HTTPException(status_code=404, detail="User not found")
+
+# Projects Endpoints
 @app.post("/projects")
-async def create_project(data: ProjectCreate):
+async def create_project(data: ProjectCreate, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     project_id = str(uuid.uuid4())
     new_project = {
         "id": project_id,
         "name": data.name,
+        "user_id": user_id,
         "created_at": datetime.now().isoformat()
     }
     projects.append(new_project)
@@ -117,29 +270,54 @@ async def create_project(data: ProjectCreate):
     return new_project
 
 @app.get("/projects")
-async def list_projects():
-    return {"projects": get_projects_db()}
+async def list_projects(user_id: str = Depends(get_current_user)):
+    projects = get_projects_db()
+    modified = False
+    user_projects = []
+    for p in projects:
+        if "user_id" not in p:
+            p["user_id"] = user_id
+            modified = True
+        if p["user_id"] == user_id:
+            user_projects.append(p)
+    if modified:
+        save_projects_db(projects)
+    return {"projects": user_projects}
 
 class ProjectUpdate(BaseModel):
     name: str
 
 @app.put("/projects/{project_id}")
-async def rename_project(project_id: str, data: ProjectUpdate):
+async def rename_project(project_id: str, data: ProjectUpdate, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     for p in projects:
         if p["id"] == project_id:
+            if "user_id" not in p:
+                p["user_id"] = user_id
+            if p["user_id"] != user_id:
+                raise HTTPException(status_code=403, detail="Not authorized to access this project")
             p["name"] = data.name
             save_projects_db(projects)
             return p
     raise HTTPException(status_code=404, detail="Project not found")
 
 @app.delete("/projects/{project_id}")
-async def delete_project(project_id: str):
+async def delete_project(project_id: str, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
-    updated_projects = [p for p in projects if p["id"] != project_id]
-    if len(updated_projects) == len(projects):
+    target_project = None
+    for p in projects:
+        if p["id"] == project_id:
+            target_project = p
+            break
+    if not target_project:
         raise HTTPException(status_code=404, detail="Project not found")
         
+    if "user_id" not in target_project:
+        target_project["user_id"] = user_id
+    if target_project["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this project")
+        
+    updated_projects = [p for p in projects if p["id"] != project_id]
     save_projects_db(updated_projects)
     
     base_dir = os.path.join(PROJECTS_DIR, project_id)
@@ -168,7 +346,9 @@ async def review_design(
     thread_id: Optional[str] = Form(None),
     ai_provider: Optional[str] = Form(None),
     ai_api_key: Optional[str] = Form(None),
+    user_id: str = Depends(get_current_user),
 ):
+    verify_project_ownership(project_id, user_id)
     _, _, stats_file, reviews_dir = get_project_paths(project_id)
     
     # grab the project name so the AI knows which brand it's looking at
@@ -285,7 +465,8 @@ async def review_design(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.post("/projects/{project_id}/ingest")
-async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_provider: Optional[str] = Form(None), ai_api_key: Optional[str] = Form(None)):
+async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_provider: Optional[str] = Form(None), ai_api_key: Optional[str] = Form(None), user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     if not file.filename:
         return JSONResponse(status_code=400, content={"error": "No file provided."})
     
@@ -347,7 +528,8 @@ async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_pro
         )
 
 @app.get("/projects/{project_id}/guidelines")
-async def list_guidelines(project_id: str):
+async def list_guidelines(project_id: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     try:
         base_dir, guidelines_dir, _, _ = get_project_paths(project_id)
         files = []
@@ -371,7 +553,8 @@ async def list_guidelines(project_id: str):
         )
 
 @app.get("/projects/{project_id}/brand_kit")
-async def get_brand_kit(project_id: str):
+async def get_brand_kit(project_id: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     try:
         base_dir, _, _, _ = get_project_paths(project_id)
         brand_kit_path = os.path.join(base_dir, "brand_kit.json")
@@ -387,7 +570,8 @@ async def get_brand_kit(project_id: str):
         )
 
 @app.get("/projects/{project_id}/stats")
-async def get_dashboard_stats(project_id: str):
+async def get_dashboard_stats(project_id: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     try:
         base_dir, guidelines_dir, stats_file, _ = get_project_paths(project_id)
         stats = get_stats(stats_file)
@@ -420,7 +604,8 @@ class ScrapeRequest(BaseModel):
     ai_api_key: Optional[str] = None
 
 @app.post("/projects/{project_id}/scrape")
-async def scrape_website(project_id: str, payload: ScrapeRequest):
+async def scrape_website(project_id: str, payload: ScrapeRequest, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     import requests as http_requests
     import re
     from urllib.parse import urljoin, urlparse
@@ -644,7 +829,8 @@ async def scrape_website(project_id: str, payload: ScrapeRequest):
     return result
 
 @app.get("/projects/{project_id}/competitors")
-async def get_competitors(project_id: str):
+async def get_competitors(project_id: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     try:
         base_dir, _, _, _ = get_project_paths(project_id)
         competitors_path = os.path.join(base_dir, "competitors.json")
@@ -660,7 +846,8 @@ async def get_competitors(project_id: str):
         )
 
 @app.post("/projects/{project_id}/reset-db")
-async def reset_database(project_id: str):
+async def reset_database(project_id: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     import shutil
     from src.retrieval.chroma_store import ChromaStore
     
@@ -694,7 +881,8 @@ async def reset_database(project_id: str):
     return {"status": "success", "message": "Database and guidelines reset successfully."}
 
 @app.delete("/projects/{project_id}/guidelines/{filename}")
-async def delete_guideline(project_id: str, filename: str):
+async def delete_guideline(project_id: str, filename: str, user_id: str = Depends(get_current_user)):
+    verify_project_ownership(project_id, user_id)
     try:
         base_dir, guidelines_dir, _, _ = get_project_paths(project_id)
         file_path = os.path.join(guidelines_dir, filename)

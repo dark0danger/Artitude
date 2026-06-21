@@ -20,6 +20,8 @@ interface AppLayoutProps {
   onGptKeyChange: (key: string) => void;
   geminiKey: string;
   onGeminiKeyChange: (key: string) => void;
+  currentUser: string | null;
+  onLogout: () => void;
   children: React.ReactNode;
 }
 
@@ -58,6 +60,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onGptKeyChange,
   geminiKey,
   onGeminiKeyChange,
+  currentUser,
+  onLogout,
   children,
 }) => {
   return (
@@ -71,6 +75,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         onClearProject={onClearProject}
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
+        currentUser={currentUser}
+        onLogout={onLogout}
       />
       
       <main className="flex-1 flex flex-col p-10 lg:p-16 relative z-10 w-full max-w-[1600px] mx-auto">

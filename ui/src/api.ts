@@ -95,12 +95,67 @@ export interface Project {
 }
 
 // Define hosted Hugging Face Space URL here
-const BASE_URL = "https://david0dods-artitude-backend.hf.space";
+const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://david0dods-artitude-backend.hf.space';
+
+export const getAuthToken = () => localStorage.getItem('artitude_auth_token') || '';
+export const setAuthToken = (token: string) => localStorage.setItem('artitude_auth_token', token);
+export const removeAuthToken = () => localStorage.removeItem('artitude_auth_token');
+
+const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
+export const register = async (username: string, password: string): Promise<{ access_token: string, username: string }> => {
+  const res = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to register');
+  }
+  const data = await res.json();
+  setAuthToken(data.access_token);
+  return data;
+};
+
+export const login = async (username: string, password: string): Promise<{ access_token: string, username: string }> => {
+  const res = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to log in');
+  }
+  const data = await res.json();
+  setAuthToken(data.access_token);
+  return data;
+};
+
+export const fetchCurrentUser = async (): Promise<{ id: string, username: string }> => {
+  const res = await fetch(`${BASE_URL}/api/auth/me`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) {
+    removeAuthToken();
+    throw new Error('Unauthorized');
+  }
+  return res.json();
+};
 
 export const createProject = async (name: string): Promise<Project> => {
   const res = await fetch(`${BASE_URL}/api/projects`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify({ name }),
   });
   if (!res.ok) throw new Error('Failed to create project');
@@ -110,7 +165,10 @@ export const createProject = async (name: string): Promise<Project> => {
 export const renameProject = async (projectId: string, newName: string): Promise<Project> => {
   const res = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify({ name: newName }),
   });
   if (!res.ok) throw new Error('Failed to rename project');
@@ -120,12 +178,15 @@ export const renameProject = async (projectId: string, newName: string): Promise
 export const deleteProject = async (projectId: string): Promise<void> => {
   const res = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: 'DELETE',
+    headers: { ...getAuthHeaders() }
   });
   if (!res.ok) throw new Error('Failed to delete project');
 };
 
 export async function fetchProjects(): Promise<Project[]> {
-  const response = await fetch(`${BASE_URL}/api/projects`);
+  const response = await fetch(`${BASE_URL}/api/projects`, {
+    headers: { ...getAuthHeaders() }
+  });
   if (!response.ok) throw new Error('Failed to fetch projects');
   const data = await response.json();
   return data.projects;
@@ -161,6 +222,7 @@ export async function analyzeRequest(
   try {
     response = await fetch(`${BASE_URL}/api/projects/${projectId}/analyze`, {
       method: 'POST',
+      headers: { ...getAuthHeaders() },
       body: formData,
     });
   } catch (err) {
@@ -236,6 +298,7 @@ export async function ingestGuideline(projectId: string, file: File): Promise<{ 
   try {
     response = await fetch(`${BASE_URL}/api/projects/${projectId}/ingest`, {
       method: 'POST',
+      headers: { ...getAuthHeaders() },
       body: formData,
     });
   } catch (err) {
@@ -266,7 +329,9 @@ export async function fetchGuidelines(projectId: string): Promise<GuidelineFile[
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}/api/projects/${projectId}/guidelines`);
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/guidelines`, {
+      headers: { ...getAuthHeaders() }
+    });
   } catch (err) {
     throw new Error('Failed to connect to the server. Make sure the backend is running.');
   }
@@ -294,6 +359,7 @@ export async function fetchGuidelines(projectId: string): Promise<GuidelineFile[
 export async function deleteGuideline(projectId: string, filename: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/api/projects/${projectId}/guidelines/${encodeURIComponent(filename)}`, {
     method: 'DELETE',
+    headers: { ...getAuthHeaders() }
   });
   if (!response.ok) {
     let errorMessage = 'Failed to delete guideline';
@@ -310,7 +376,9 @@ export async function deleteGuideline(projectId: string, filename: string): Prom
 
 export async function fetchBrandKit(projectId: string): Promise<BrandKit | null> {
   if (!projectId) return null;
-  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/brand_kit`);
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/brand_kit`, {
+    headers: { ...getAuthHeaders() }
+  });
   if (!response.ok) {
     if (response.status === 404) return null;
     throw new Error('Failed to fetch brand kit');
@@ -325,7 +393,9 @@ export async function fetchBrandKit(projectId: string): Promise<BrandKit | null>
 
 export async function fetchCompetitors(projectId: string): Promise<CompetitorKit[]> {
   if (!projectId) return [];
-  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/competitors`);
+  const response = await fetch(`${BASE_URL}/api/projects/${projectId}/competitors`, {
+    headers: { ...getAuthHeaders() }
+  });
   if (!response.ok) {
     if (response.status === 404) return [];
     throw new Error('Failed to fetch competitors');
@@ -342,7 +412,10 @@ export async function scrapeWebsite(projectId: string, url: string): Promise<{ w
   const aiSettings = getAISettings();
   const response = await fetch(`${BASE_URL}/api/projects/${projectId}/scrape`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify({ url, ...aiSettings }),
   });
   if (!response.ok) {
@@ -354,6 +427,7 @@ export async function scrapeWebsite(projectId: string, url: string): Promise<{ w
 export async function resetDatabase(projectId: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/api/projects/${projectId}/reset-db`, {
     method: 'POST',
+    headers: { ...getAuthHeaders() }
   });
   if (!response.ok) {
     throw new Error('Failed to reset database');
@@ -365,7 +439,9 @@ export async function fetchStats(projectId: string): Promise<DashboardStats> {
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}/api/projects/${projectId}/stats`);
+    response = await fetch(`${BASE_URL}/api/projects/${projectId}/stats`, {
+      headers: { ...getAuthHeaders() }
+    });
   } catch (err) {
     throw new Error('Failed to connect to the server. Make sure the backend is running.');
   }
