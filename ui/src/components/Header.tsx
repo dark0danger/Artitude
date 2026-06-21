@@ -32,12 +32,12 @@ const navTooltips: Record<string, { label: string; desc: string }> = {
   guide: { label: "Guide & Workflow", desc: "Learn how to use Artitude in your daily design process." },
 };
 
-export const Header: React.FC<HeaderProps> = ({ 
-  activeView, 
-  onNavigate, 
-  hasActiveProject, 
-  onClearProject, 
-  searchQuery, 
+export const Header: React.FC<HeaderProps> = ({
+  activeView,
+  onNavigate,
+  hasActiveProject,
+  onClearProject,
+  searchQuery,
   onSearchChange,
   currentUser,
   onLogout,
@@ -58,16 +58,16 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Back to Projects button — inline with nav tabs */}
           {hasActiveProject && (
             <div className="relative py-2 shrink-0">
-                <button
-                  onClick={onClearProject}
-                  className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
-                  title="Back to Projects"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                  </svg>
-                  Projects
-                </button>
+              <button
+                onClick={onClearProject}
+                className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
+                title="Back to Projects"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Projects
+              </button>
             </div>
           )}
           {navItems.map((item) => {
@@ -82,9 +82,8 @@ export const Header: React.FC<HeaderProps> = ({
               <div key={item.id} className="relative py-2 shrink-0">
                 <button
                   onClick={() => onNavigate(item.id)}
-                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
-                    isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
-                  }`}
+                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
+                    }`}
                 >
                   {item.label}
                 </button>
@@ -101,13 +100,13 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Search — fixed width */}
           <div className="relative w-72 shrink-0">
-              <input
-                type="text"
-                placeholder="Type to search..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
-              />
+            <input
+              type="text"
+              placeholder="Type to search..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
+            />
           </div>
 
           {/* User Profile & Logout */}
@@ -121,23 +120,23 @@ export const Header: React.FC<HeaderProps> = ({
                   Authenticated
                 </span>
               </div>
-                <button
-                  onClick={onLogout}
-                  className="w-8 h-8 rounded-full border border-artitude-text/10 text-artitude-muted hover:text-artitude-red hover:border-artitude-red/20 flex items-center justify-center transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-                  </svg>
-                </button>
+              <button
+                onClick={onLogout}
+                className="w-8 h-8 rounded-full border border-artitude-text/10 text-artitude-muted hover:text-artitude-red hover:border-artitude-red/20 flex items-center justify-center transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+                </svg>
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-3 pl-4 border-l border-[#1A1A1A]/10 shrink-0 ml-auto">
-                <button
-                  onClick={onOpenAuth}
-                  className="px-6 py-2 bg-artitude-text text-white text-xs font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors"
-                >
-                  Sign In
-                </button>
+              <button
+                onClick={onOpenAuth}
+                className="px-6 py-2 bg-artitude-text text-white text-xs font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors"
+              >
+                Sign In
+              </button>
             </div>
           )}
         </nav>
