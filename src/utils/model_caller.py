@@ -29,18 +29,26 @@ def call_with_fallback(
     fallback_model_names: list[str] = None,
     max_retries: int = None,
     base_delay: float = None,
+    client_override: OpenAI = None,
+    model_override: str = None,
 ) -> str:
     """
     Try the primary model, retry on 429s, then fall back to the next model.
     Returns raw text (or JSON string if response_format is set).
+    
+    If client_override and model_override are provided, they take priority
+    over the default client and model chain (used for user-supplied API keys).
     """
     if max_retries is None:
         max_retries = config.MAX_RETRIES
     if base_delay is None:
         base_delay = config.RETRY_BASE_DELAY
+    
+    active_client = client_override or client
         
-    primary_model = primary_model_name or config.ROUTER_MODEL_NAME
-    fallbacks = fallback_model_names or config.ROUTER_MODEL_FALLBACKS
+    primary_model = model_override or primary_model_name or config.ROUTER_MODEL_NAME
+    # Skip fallbacks when using a user-supplied override
+    fallbacks = [] if (client_override or model_override) else (fallback_model_names or config.ROUTER_MODEL_FALLBACKS)
     
     model_chain = [primary_model] + list(fallbacks)
     last_exception = None
@@ -54,14 +62,14 @@ def call_with_fallback(
                 )
                 
                 if response_format:
-                    response = client.beta.chat.completions.parse(
+                    response = active_client.beta.chat.completions.parse(
                         model=model_name,
                         messages=messages,
                         response_format=response_format
                     )
                     result_text = response.choices[0].message.content
                 else:
-                    response = client.chat.completions.create(
+                    response = active_client.chat.completions.create(
                         model=model_name,
                         messages=messages,
                     )

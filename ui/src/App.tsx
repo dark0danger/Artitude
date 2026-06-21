@@ -7,6 +7,7 @@ import { CompetitorsManager } from './pages/CompetitorsManager';
 import { Guide } from './pages/Guide';
 import { ProjectManager } from './pages/ProjectManager';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { AIProvider } from './components/AISettingsPanel';
 
 type ViewType = 'dashboard' | 'workspace' | 'guidelines' | 'competitors' | 'guide' | 'projects';
 
@@ -15,6 +16,17 @@ function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // AI settings — initialized from localStorage
+  const [aiProvider, setAIProvider] = useState<AIProvider>(
+    () => (localStorage.getItem('artitude_ai_provider') as AIProvider) || 'gpt4o'
+  );
+  const [gptKey, setGptKey] = useState(
+    () => localStorage.getItem('artitude_gpt4o_key') || ''
+  );
+  const [geminiKey, setGeminiKey] = useState(
+    () => localStorage.getItem('artitude_gemini_key') || ''
+  );
 
   useEffect(() => {
     // dismiss the splash screen after 4s
@@ -118,6 +130,12 @@ function App() {
         onClearProject={() => handleSelectProject(null)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        aiProvider={aiProvider}
+        onAIProviderChange={setAIProvider}
+        gptKey={gptKey}
+        onGptKeyChange={setGptKey}
+        geminiKey={geminiKey}
+        onGeminiKeyChange={setGeminiKey}
       >
         {currentView.component}
       </AppLayout>

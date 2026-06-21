@@ -3,7 +3,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
-from src.config import config as app_config
+from src.config import config as app_config, resolve_ai_client
 from src.state import AgentState
 from src.schemas import ValidationFeedbackSchema, DesignReviewSchema
 from src.retrieval.retriever import Retriever
@@ -63,6 +63,11 @@ def synthesis_node(state: AgentState, config: RunnableConfig):
     project_id = state.get("project_id", "default")
     project_name = state.get("project_name", "Unknown Brand")
     q = config.get("configurable", {}).get("queue")
+    
+    # Resolve AI provider from request overrides
+    ai_provider = config.get("configurable", {}).get("ai_provider")
+    ai_api_key = config.get("configurable", {}).get("ai_api_key")
+    user_client, user_model = resolve_ai_client(ai_provider, ai_api_key)
     
     # stitch together the retrieved guideline chunks into a prompt block
     guidelines_summary = ""
@@ -195,11 +200,9 @@ For this step, write out your synthesis and Delta Report as a professional desig
                 ]
             })
         
-        # stream the narrative text first
-        client = OpenAI(base_url="https://models.github.ai/inference", api_key=app_config.GITHUB_TOKEN)
-        
-        narrative_stream = client.chat.completions.create(
-            model=app_config.ROUTER_MODEL_NAME,
+        # stream the narrative text first using the resolved client
+        narrative_stream = user_client.chat.completions.create(
+            model=user_model,
             messages=messages,
             stream=True
         )
@@ -224,6 +227,8 @@ For this step, write out your synthesis and Delta Report as a professional desig
                 response_format=DesignReviewSchema,
                 primary_model_name=app_config.ROUTER_MODEL_NAME,
                 fallback_model_names=app_config.ROUTER_MODEL_FALLBACKS,
+                client_override=user_client,
+                model_override=user_model,
             )
         response_text = run_with_timeout(call_api, TIMEOUT_SECONDS)
         review_data = json.loads(response_text)

@@ -22,29 +22,31 @@ const navItems = [
 export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiveProject, onClearProject, searchQuery, onSearchChange }) => {
   return (
     <header className="sticky top-0 z-30 bg-artitude-canvas/90 backdrop-blur-sm border-b border-[#1A1A1A]/10">
-      <div className="flex items-center justify-between px-10 py-4 h-20 max-w-[1600px] mx-auto w-full">
-        <div className="flex items-center gap-6">
+      <div className="flex items-center px-10 py-4 h-20 max-w-[1600px] mx-auto w-full gap-10">
+        {/* Left: Logo */}
+        <div className="flex items-center shrink-0">
           <div className="flex items-center gap-2 cursor-pointer" onClick={onClearProject}>
             <h1 className="text-3xl font-fraunces font-bold text-artitude-text tracking-wide">Artitude</h1>
           </div>
+        </div>
+
+        {/* Center: Nav Items — take up available space */}
+        <nav className="flex items-center gap-6 flex-1 min-w-0">
+          {/* Back to Projects button — inline with nav tabs */}
           {hasActiveProject && (
-            <div className="relative py-2 ml-4">
+            <div className="relative py-2 shrink-0">
               <button
                 onClick={onClearProject}
-                className="text-artitude-muted hover:text-artitude-red transition-colors duration-300"
+                className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
                 title="Back to Projects"
-                aria-label="Back to Projects"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
+                Projects
               </button>
             </div>
           )}
-        </div>
-
-        {/* Center: Nav Items */}
-        <nav className="flex items-center gap-8">
           {navItems.map((item) => {
             if (item.requiresProject && !hasActiveProject) return null;
             if (hasActiveProject && item.id === 'projects') return null;
@@ -52,10 +54,10 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
 
             const isActive = activeView === item.id;
             return (
-              <div key={item.id} className="relative py-2">
+              <div key={item.id} className="relative py-2 shrink-0">
                 <button
                   onClick={() => onNavigate(item.id)}
-                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 ${
+                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
                     isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
                   }`}
                 >
@@ -71,11 +73,9 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
               </div>
             );
           })}
-        </nav>
 
-        {/* Right: Search & Profile & Guide */}
-        <div className="flex items-center gap-8 w-80 justify-end">
-          <div className="relative w-full group">
+          {/* Search — fixed width */}
+          <div className="relative w-72 shrink-0">
             <input
               type="text"
               placeholder="Type to search..."
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ activeView, onNavigate, hasActiv
               className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
             />
           </div>
-        </div>
+        </nav>
       </div>
     </header>
   );

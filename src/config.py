@@ -20,3 +20,34 @@ class Config:
     RETRY_BASE_DELAY = 5  # seconds, exponential backoff
 
 config = Config()
+
+
+def resolve_ai_client(ai_provider: str = None, ai_api_key: str = None):
+    """
+    Return (client, model_name) based on the user's provider choice and key.
+    Falls back to the .env defaults when no overrides are given.
+    """
+    from openai import OpenAI
+
+    provider = (ai_provider or "").lower().strip()
+    key = (ai_api_key or "").strip()
+
+    if provider == "gemini":
+        api_key = key or config.GEMINI_API_KEY
+        if not api_key:
+            raise ValueError("No Gemini API key provided and none configured on the server.")
+        client = OpenAI(
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            api_key=api_key,
+        )
+        return client, "gemini-2.0-flash"
+
+    # Default: gpt4o via GitHub Models
+    api_key = key or config.GITHUB_TOKEN
+    if not api_key:
+        raise ValueError("No GPT-4o API key provided and none configured on the server.")
+    client = OpenAI(
+        base_url="https://models.github.ai/inference",
+        api_key=api_key,
+    )
+    return client, "openai/gpt-4o"

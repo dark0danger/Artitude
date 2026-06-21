@@ -16,4 +16,6 @@ class AgentState(TypedDict, total=False):
     recursion_count: int
     errors: List[str]
     queue: Any
+    ai_provider: Optional[str]  # 'gpt4o' or 'gemini'
+    ai_api_key: Optional[str]   # user-supplied API key
 

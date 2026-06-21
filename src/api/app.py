@@ -12,7 +12,7 @@ from pydantic import BaseModel
 import queue
 import threading
 from openai import OpenAI
-from src.config import config
+from src.config import config, resolve_ai_client
 
 from src.agents.graph import graph
 from src.ingestion.build_index import build_index
@@ -165,7 +165,9 @@ async def review_design(
     project_id: str, 
     query: str = Form(""), 
     image: Optional[UploadFile] = File(None),
-    thread_id: Optional[str] = Form(None)
+    thread_id: Optional[str] = Form(None),
+    ai_provider: Optional[str] = Form(None),
+    ai_api_key: Optional[str] = Form(None),
 ):
     _, _, stats_file, reviews_dir = get_project_paths(project_id)
     
@@ -201,7 +203,9 @@ async def review_design(
             config = {
                 "configurable": {
                     "thread_id": actual_thread_id,
-                    "queue": q
+                    "queue": q,
+                    "ai_provider": ai_provider,
+                    "ai_api_key": ai_api_key,
                 }
             }
             
@@ -281,7 +285,7 @@ async def review_design(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.post("/projects/{project_id}/ingest")
-async def ingest_guideline(project_id: str, file: UploadFile = File(...)):
+async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_provider: Optional[str] = Form(None), ai_api_key: Optional[str] = Form(None)):
     if not file.filename:
         return JSONResponse(status_code=400, content={"error": "No file provided."})
     
@@ -313,9 +317,9 @@ async def ingest_guideline(project_id: str, file: UploadFile = File(...)):
                 
         # ask openai to pull out brand kit info
         try:
-            client = OpenAI(base_url="https://models.github.ai/inference", api_key=config.GITHUB_TOKEN)
-            response = client.beta.chat.completions.parse(
-                model="openai/gpt-4o-mini",
+            ingest_client, ingest_model = resolve_ai_client(ai_provider, ai_api_key)
+            response = ingest_client.beta.chat.completions.parse(
+                model=ingest_model,
                 messages=[
                     {"role": "system", "content": "Extract the brand kit information (primary colors, secondary colors, typography fonts, and clearance/logo spacing rules) from the following text. Colors must be hex codes."},
                     {"role": "user", "content": text[:30000]}
@@ -412,6 +416,8 @@ async def get_dashboard_stats(project_id: str):
         )
 class ScrapeRequest(BaseModel):
     url: str
+    ai_provider: Optional[str] = None
+    ai_api_key: Optional[str] = None
 
 @app.post("/projects/{project_id}/scrape")
 async def scrape_website(project_id: str, payload: ScrapeRequest):
@@ -588,7 +594,7 @@ async def scrape_website(project_id: str, payload: ScrapeRequest):
     extract_error = None
     try:
         from openai import OpenAI
-        client = OpenAI(base_url="https://models.github.ai/inference", api_key=config.GITHUB_TOKEN)
+        scrape_client, scrape_model = resolve_ai_client(payload.ai_provider, payload.ai_api_key)
         
         system_instruction = (
             "You are a brand identity expert. Extract the brand kit from the provided website analysis signals.\n\n"
@@ -606,8 +612,8 @@ async def scrape_website(project_id: str, payload: ScrapeRequest):
             "NEVER return empty arrays."
         )
         
-        completion = client.beta.chat.completions.parse(
-            model=config.ROUTER_MODEL_NAME,
+        completion = scrape_client.beta.chat.completions.parse(
+            model=scrape_model,
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": signals_prompt}
