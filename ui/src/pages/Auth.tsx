@@ -39,15 +39,12 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-artitude-canvas relative overflow-hidden px-4">
-      {/* Background radial glow */}
-      <div className="absolute w-[800px] h-[800px] rounded-full bg-gradient-to-br from-artitude-red/5 to-transparent blur-3xl pointer-events-none" />
-
+    <div className="w-full relative">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="w-full max-w-md bg-white border border-[#1A1A1A]/10 p-12 relative overflow-visible shadow-2xl"
+        className="w-full bg-white border border-[#1A1A1A]/10 p-12 relative overflow-visible shadow-2xl"
       >
         <CropMarks />
 

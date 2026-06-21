@@ -22,6 +22,7 @@ interface AppLayoutProps {
   onGeminiKeyChange: (key: string) => void;
   currentUser: string | null;
   onLogout: () => void;
+  onOpenAuth: () => void;
   children: React.ReactNode;
 }
 
@@ -62,6 +63,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onGeminiKeyChange,
   currentUser,
   onLogout,
+  onOpenAuth,
   children,
 }) => {
   return (
@@ -77,6 +79,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         onSearchChange={onSearchChange}
         currentUser={currentUser}
         onLogout={onLogout}
+        onOpenAuth={onOpenAuth}
       />
       
       <main className="flex-1 flex flex-col p-10 lg:p-16 relative z-10 w-full max-w-[1600px] mx-auto">

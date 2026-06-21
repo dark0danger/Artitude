@@ -17,9 +17,11 @@ const itemVariants: import('framer-motion').Variants = {
 interface ProjectManagerProps {
   onSelectProject: (projectId: string) => void;
   searchQuery?: string;
+  currentUser: string | null;
+  onOpenAuth: () => void;
 }
 
-export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject, searchQuery = '' }) => {
+export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject, searchQuery = '', currentUser, onOpenAuth }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -94,7 +96,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
           </p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="w-full max-w-4xl bg-transparent p-10 border border-[#1A1A1A]/10 border-l-4 border-l-artitude-red mb-16 relative overflow-visible group">
+        <motion.div variants={itemVariants} className={`w-full max-w-4xl bg-transparent p-10 border border-[#1A1A1A]/10 border-l-4 border-l-artitude-red mb-16 relative overflow-visible group ${!currentUser ? 'opacity-50 pointer-events-none' : ''}`}>
           <CropMarks />
           <h3 className="text-2xl font-fraunces text-artitude-text mb-8 tracking-wide">Create New Project</h3>
           <form onSubmit={handleCreate} className="flex gap-6">
@@ -104,14 +106,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
               onChange={(e) => setNewProjectName(e.target.value)}
               placeholder="e.g. Neon Coffee Rebrand..."
               className="flex-1 px-0 py-4 bg-transparent border-b-2 border-gray-200 focus:border-artitude-red outline-none transition-colors text-xl font-medium text-artitude-text placeholder:text-gray-300"
-              disabled={isCreating}
+              disabled={isCreating || !currentUser}
             />
             <Tooltip content="Create Campaign" description="Generate a new isolated project database and guidelines store.">
               <motion.button
                 whileHover={{ scale: 1.02, backgroundColor: "var(--color-artitude-redDark)" }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={isCreating || !newProjectName.trim()}
+                disabled={isCreating || !newProjectName.trim() || !currentUser}
                 className="px-10 py-4 bg-artitude-red text-white font-bold text-lg uppercase tracking-wider transition-colors disabled:opacity-50 disabled:hover:bg-artitude-red"
               >
                 {isCreating ? 'CREATING...' : 'CREATE PROJECT'}
@@ -168,10 +170,22 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
           ))}
 
           {filteredProjects.length === 0 && (
-            <div className="col-span-full text-center py-24 bg-transparent border-y border-[#1A1A1A]/10 w-full">
+            <div className="col-span-full text-center py-24 bg-transparent border-y border-[#1A1A1A]/10 w-full flex flex-col items-center gap-6">
               <p className="text-lg font-general font-light text-gray-400">
-                {searchQuery ? "No projects match your search." : "No projects yet. Create one above to get started."}
+                {!currentUser 
+                  ? "Sign in to view and create your intelligence campaigns."
+                  : searchQuery 
+                    ? "No projects match your search." 
+                    : "No projects yet. Create one above to get started."}
               </p>
+              {!currentUser && (
+                <button
+                  onClick={onOpenAuth}
+                  className="px-8 py-3 bg-artitude-text text-white text-sm font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors"
+                >
+                  Sign In to Continue
+                </button>
+              )}
             </div>
           )}
         </motion.div>

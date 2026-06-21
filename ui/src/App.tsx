@@ -20,6 +20,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // AI settings — initialized from localStorage
   const [aiProvider, setAIProvider] = useState<AIProvider>(
@@ -58,6 +59,7 @@ function App() {
 
   const handleLoginSuccess = (username: string) => {
     setCurrentUser(username);
+    setIsAuthModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -80,7 +82,7 @@ function App() {
     projects: {
       title: 'Projects',
       subtitle: 'Manage your active brand intelligence campaigns.',
-      component: <ProjectManager onSelectProject={handleSelectProject} searchQuery={searchQuery} />
+      component: <ProjectManager onSelectProject={handleSelectProject} searchQuery={searchQuery} currentUser={currentUser} onOpenAuth={() => setIsAuthModalOpen(true)} />
     },
     dashboard: {
       title: 'Project Dashboard',
@@ -122,9 +124,6 @@ function App() {
     );
   }
 
-  if (!currentUser) {
-    return <Auth onLoginSuccess={handleLoginSuccess} />;
-  }
 
   const currentView = viewConfig[activeView] || viewConfig['projects'];
 
@@ -186,9 +185,36 @@ function App() {
         onGeminiKeyChange={setGeminiKey}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       >
         {currentView.component}
       </AppLayout>
+
+      {/* Auth Modal Overlay */}
+      <AnimatePresence>
+        {isAuthModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          >
+            <div className="relative w-full max-w-md">
+              <button 
+                onClick={() => setIsAuthModalOpen(false)}
+                className="absolute -top-12 right-0 text-white hover:text-artitude-red transition-colors"
+                title="Close"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <Auth onLoginSuccess={handleLoginSuccess} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

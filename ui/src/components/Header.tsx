@@ -11,6 +11,7 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   currentUser: string | null;
   onLogout: () => void;
+  onOpenAuth: () => void;
 }
 
 const navItems = [
@@ -39,7 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   searchQuery, 
   onSearchChange,
   currentUser,
-  onLogout
+  onLogout,
+  onOpenAuth
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-artitude-canvas/90 backdrop-blur-sm border-b border-[#1A1A1A]/10">
@@ -115,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* User Profile & Logout */}
-          {currentUser && (
+          {currentUser ? (
             <div className="flex items-center gap-3 pl-4 border-l border-[#1A1A1A]/10 shrink-0 ml-auto">
               <div className="flex flex-col items-end">
                 <span className="text-[10px] font-general font-bold text-artitude-text truncate max-w-24 leading-none mb-0.5">
@@ -133,6 +135,17 @@ export const Header: React.FC<HeaderProps> = ({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
                   </svg>
+                </button>
+              </Tooltip>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 pl-4 border-l border-[#1A1A1A]/10 shrink-0 ml-auto">
+              <Tooltip content="Sign In" description="Access your brand intelligence campaigns and workspaces.">
+                <button
+                  onClick={onOpenAuth}
+                  className="px-6 py-2 bg-artitude-text text-white text-xs font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors"
+                >
+                  Sign In
                 </button>
               </Tooltip>
             </div>
