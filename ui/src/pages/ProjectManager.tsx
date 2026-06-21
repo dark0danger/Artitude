@@ -27,8 +27,12 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onSelectProject,
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    if (currentUser) {
+      loadProjects();
+    } else {
+      setProjects([]);
+    }
+  }, [currentUser]);
 
   const loadProjects = async () => {
     try {

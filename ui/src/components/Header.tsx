@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Tooltip } from './Tooltip';
+
 
 interface HeaderProps {
   activeView: string;
@@ -58,7 +58,6 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Back to Projects button — inline with nav tabs */}
           {hasActiveProject && (
             <div className="relative py-2 shrink-0">
-              <Tooltip content="Back to Projects" description="Exit current campaign and return to the main campaigns selector.">
                 <button
                   onClick={onClearProject}
                   className="flex items-center gap-1.5 text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 text-artitude-muted hover:text-artitude-red"
@@ -69,7 +68,6 @@ export const Header: React.FC<HeaderProps> = ({
                   </svg>
                   Projects
                 </button>
-              </Tooltip>
             </div>
           )}
           {navItems.map((item) => {
@@ -82,16 +80,14 @@ export const Header: React.FC<HeaderProps> = ({
 
             return (
               <div key={item.id} className="relative py-2 shrink-0">
-                <Tooltip content={tool.label} description={tool.desc}>
-                  <button
-                    onClick={() => onNavigate(item.id)}
-                    className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
-                      isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                </Tooltip>
+                <button
+                  onClick={() => onNavigate(item.id)}
+                  className={`text-xs tracking-widest font-general font-medium uppercase transition-colors duration-300 whitespace-nowrap ${
+                    isActive ? 'text-artitude-red' : 'text-artitude-muted hover:text-artitude-text'
+                  }`}
+                >
+                  {item.label}
+                </button>
                 {isActive && (
                   <motion.div
                     layoutId="activeNavIndicator"
@@ -105,7 +101,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Search — fixed width */}
           <div className="relative w-72 shrink-0">
-            <Tooltip content="Search Filter" description="Filter the active list by name or metadata properties.">
               <input
                 type="text"
                 placeholder="Type to search..."
@@ -113,7 +108,6 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="w-full bg-transparent border-b border-[#1A1A1A]/10 focus:border-artitude-red outline-none py-1 text-artitude-text placeholder:text-gray-300 transition-colors text-xs font-general font-medium"
               />
-            </Tooltip>
           </div>
 
           {/* User Profile & Logout */}
@@ -127,7 +121,6 @@ export const Header: React.FC<HeaderProps> = ({
                   Authenticated
                 </span>
               </div>
-              <Tooltip content="Sign Out" description="Terminate your active session and return to the login interface.">
                 <button
                   onClick={onLogout}
                   className="w-8 h-8 rounded-full border border-artitude-text/10 text-artitude-muted hover:text-artitude-red hover:border-artitude-red/20 flex items-center justify-center transition-colors"
@@ -136,18 +129,15 @@ export const Header: React.FC<HeaderProps> = ({
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
                   </svg>
                 </button>
-              </Tooltip>
             </div>
           ) : (
             <div className="flex items-center gap-3 pl-4 border-l border-[#1A1A1A]/10 shrink-0 ml-auto">
-              <Tooltip content="Sign In" description="Access your brand intelligence campaigns and workspaces.">
                 <button
                   onClick={onOpenAuth}
                   className="px-6 py-2 bg-artitude-text text-white text-xs font-bold tracking-widest uppercase hover:bg-artitude-red transition-colors"
                 >
                   Sign In
                 </button>
-              </Tooltip>
             </div>
           )}
         </nav>
