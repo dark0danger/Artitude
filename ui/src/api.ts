@@ -1,6 +1,5 @@
 
 
-/** Read the user's AI provider settings from localStorage. */
 export function getAISettings(): { ai_provider: string; ai_api_key: string } {
   const provider = localStorage.getItem('artitude_ai_provider') || 'gpt4o';
   const key = provider === 'gemini'
@@ -152,7 +151,7 @@ export const fetchCurrentUser = async (): Promise<{ id: string, username: string
 export const createProject = async (name: string): Promise<Project> => {
   const res = await fetch(`${BASE_URL}/api/projects`, {
     method: 'POST',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
@@ -165,7 +164,7 @@ export const createProject = async (name: string): Promise<Project> => {
 export const renameProject = async (projectId: string, newName: string): Promise<Project> => {
   const res = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
     method: 'PUT',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
@@ -412,7 +411,7 @@ export async function scrapeWebsite(projectId: string, url: string): Promise<{ w
   const aiSettings = getAISettings();
   const response = await fetch(`${BASE_URL}/api/projects/${projectId}/scrape`, {
     method: 'POST',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
