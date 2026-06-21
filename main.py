@@ -46,7 +46,7 @@ def validate(args):
 def serve(args):
     import uvicorn
     print("Starting FastAPI server...")
-    uvicorn.run("src.api.app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("src.api.app:app", host="0.0.0.0", port=8000, reload=True)
 
 def main():
     parser = argparse.ArgumentParser(description="Artitude CLI - brand intelligence & design review tool")
