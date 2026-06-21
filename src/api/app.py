@@ -251,7 +251,7 @@ async def get_me(user_id: str = Depends(get_current_user)):
     raise HTTPException(status_code=404, detail="User not found")
 
 # Projects Endpoints
-@app.post("/projects")
+@app.post("/api/projects")
 async def create_project(data: ProjectCreate, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     project_id = str(uuid.uuid4())
@@ -269,7 +269,7 @@ async def create_project(data: ProjectCreate, user_id: str = Depends(get_current
     
     return new_project
 
-@app.get("/projects")
+@app.get("/api/projects")
 async def list_projects(user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     modified = False
@@ -287,7 +287,7 @@ async def list_projects(user_id: str = Depends(get_current_user)):
 class ProjectUpdate(BaseModel):
     name: str
 
-@app.put("/projects/{project_id}")
+@app.put("/api/projects/{project_id}")
 async def rename_project(project_id: str, data: ProjectUpdate, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     for p in projects:
@@ -301,7 +301,7 @@ async def rename_project(project_id: str, data: ProjectUpdate, user_id: str = De
             return p
     raise HTTPException(status_code=404, detail="Project not found")
 
-@app.delete("/projects/{project_id}")
+@app.delete("/api/projects/{project_id}")
 async def delete_project(project_id: str, user_id: str = Depends(get_current_user)):
     projects = get_projects_db()
     target_project = None
@@ -338,7 +338,7 @@ async def delete_project(project_id: str, user_id: str = Depends(get_current_use
             
     return {"status": "success"}
 
-@app.post("/projects/{project_id}/analyze")
+@app.post("/api/projects/{project_id}/analyze")
 async def review_design(
     project_id: str, 
     query: str = Form(""), 
@@ -464,7 +464,7 @@ async def review_design(
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-@app.post("/projects/{project_id}/ingest")
+@app.post("/api/projects/{project_id}/ingest")
 async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_provider: Optional[str] = Form(None), ai_api_key: Optional[str] = Form(None), user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     if not file.filename:
@@ -527,7 +527,7 @@ async def ingest_guideline(project_id: str, file: UploadFile = File(...), ai_pro
             content={"error": f"Ingestion failed: {str(e)}"}
         )
 
-@app.get("/projects/{project_id}/guidelines")
+@app.get("/api/projects/{project_id}/guidelines")
 async def list_guidelines(project_id: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     try:
@@ -552,7 +552,7 @@ async def list_guidelines(project_id: str, user_id: str = Depends(get_current_us
             content={"error": f"Failed to list guidelines: {str(e)}"}
         )
 
-@app.get("/projects/{project_id}/brand_kit")
+@app.get("/api/projects/{project_id}/brand_kit")
 async def get_brand_kit(project_id: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     try:
@@ -569,7 +569,7 @@ async def get_brand_kit(project_id: str, user_id: str = Depends(get_current_user
             content={"error": f"Failed to get brand kit: {str(e)}"}
         )
 
-@app.get("/projects/{project_id}/stats")
+@app.get("/api/projects/{project_id}/stats")
 async def get_dashboard_stats(project_id: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     try:
@@ -603,7 +603,7 @@ class ScrapeRequest(BaseModel):
     ai_provider: Optional[str] = None
     ai_api_key: Optional[str] = None
 
-@app.post("/projects/{project_id}/scrape")
+@app.post("/api/projects/{project_id}/scrape")
 async def scrape_website(project_id: str, payload: ScrapeRequest, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     import requests as http_requests
@@ -828,7 +828,7 @@ async def scrape_website(project_id: str, payload: ScrapeRequest, user_id: str =
         result["warning"] = f"Brand kit extraction failed: {extract_error}"
     return result
 
-@app.get("/projects/{project_id}/competitors")
+@app.get("/api/projects/{project_id}/competitors")
 async def get_competitors(project_id: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     try:
@@ -845,7 +845,7 @@ async def get_competitors(project_id: str, user_id: str = Depends(get_current_us
             content={"error": f"Failed to get competitors: {str(e)}"}
         )
 
-@app.post("/projects/{project_id}/reset-db")
+@app.post("/api/projects/{project_id}/reset-db")
 async def reset_database(project_id: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     import shutil
@@ -880,7 +880,7 @@ async def reset_database(project_id: str, user_id: str = Depends(get_current_use
         
     return {"status": "success", "message": "Database and guidelines reset successfully."}
 
-@app.delete("/projects/{project_id}/guidelines/{filename}")
+@app.delete("/api/projects/{project_id}/guidelines/{filename}")
 async def delete_guideline(project_id: str, filename: str, user_id: str = Depends(get_current_user)):
     verify_project_ownership(project_id, user_id)
     try:

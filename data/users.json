@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ef1b2311-2c71-4dcf-ad74-b390441b9071",
+    "username": "admin",
+    "password_hash": "fd90435369911597a6fcd3a95be5070d:b51f3a88eb6e0385a0f3fd90876372206ac31ad46a0bca838ea39ab7327c934f",
+    "created_at": "2026-06-21T19:53:13.827773"
+  },
+  {
+    "id": "6258837d-1367-4917-8e6d-7dd008d4c4d2",
+    "username": "alphaPrime",
+    "password_hash": "30b7ea4d9e0cd14c1b65195c12269b99:b37fdba9a3337dcce886a47d0bce153709bf9f18f26f29539bc9f2ab59cde236",
+    "created_at": "2026-06-21T20:53:54.251350"
+  }
+]
