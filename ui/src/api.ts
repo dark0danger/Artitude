@@ -388,3 +388,16 @@ export async function fetchStats(projectId: string): Promise<DashboardStats> {
     throw new Error('Server returned an invalid response.');
   }
 }
+export interface DashboardStats {
+  active_guidelines: number;
+  designs_reviewed: number;
+  enhancements_suggested: number;
+  brand_health_score: number;
+  recent_scores?: number[];
+  last_review?: {
+    filename: string;
+    top_issue: string;
+    timestamp: number;
+    review_id: string;
+  } | null;
+}

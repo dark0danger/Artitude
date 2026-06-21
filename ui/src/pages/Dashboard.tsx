@@ -53,10 +53,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
   return (
     <div className="w-full h-full relative z-10">
       <motion.div initial="hidden" animate="show" variants={containerVariants} className="max-w-6xl mx-auto">
-        
+
         <motion.div variants={itemVariants} className="flex justify-between items-end mb-16 border-b border-gray-200 pb-8">
           <div className="relative">
-            <h2 className="text-5xl font-fraunces font-bold text-artitude-text tracking-normal">Brand Consistency & <br/><span className="text-artitude-red font-fraunces font-bold italic">Design Enhancement</span></h2>
+            <h2 className="text-5xl font-fraunces font-bold text-artitude-text tracking-normal">Brand Consistency & <br /><span className="text-artitude-red font-fraunces font-bold italic">Design Enhancement</span></h2>
             <p className="text-xl text-artitude-muted mt-4 font-general font-light">Your co-pilot for maintaining brand identity and elevating designs.</p>
           </div>
           <motion.button
@@ -71,32 +71,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
 
         {/* Actionable Cards */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          
+
           {/* Brand Health Trend */}
-          <motion.div 
+          <motion.div
             whileHover={{ y: -4 }}
             className="bg-artitude-canvas p-8 relative overflow-visible group flex flex-col justify-between border border-[#1A1A1A]/10 h-64"
           >
             <CropMarks />
             <h4 className="text-xs font-general font-medium text-artitude-muted uppercase tracking-widest mb-4">Brand Health Trend</h4>
-            
+
             <div className="flex-grow relative w-full mt-4 mb-4">
               {stats.recent_scores && stats.recent_scores.length > 1 ? (
                 <svg width="100%" height="100%" viewBox="0 -5 100 40" preserveAspectRatio="none" className="overflow-visible text-artitude-red opacity-40 group-hover:opacity-100 transition-opacity duration-500">
-                  <polyline 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    points={stats.recent_scores.map((val, i) => `${(i / Math.max(1, stats.recent_scores!.length - 1)) * 100},${30 - (val / 100) * 30}`).join(' ')} 
-                    vectorEffect="non-scaling-stroke" 
+                  <polyline
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    points={stats.recent_scores.map((val, i) => `${(i / Math.max(1, stats.recent_scores!.length - 1)) * 100},${30 - (val / 100) * 30}`).join(' ')}
+                    vectorEffect="non-scaling-stroke"
                   />
-                  {stats.recent_scores.map((val, i) => (
-                    <circle 
-                      key={i} 
-                      cx={(i / Math.max(1, stats.recent_scores!.length - 1)) * 100} 
-                      cy={30 - (val / 100) * 30} 
-                      r="2" 
-                      fill="currentColor" 
+                  {stats.recent_scores.map((val: number, i: number) => (
+                    <circle
+                      key={i}
+                      cx={(i / Math.max(1, stats.recent_scores!.length - 1)) * 100}
+                      cy={30 - (val / 100) * 30}
+                      r="2"
+                      fill="currentColor"
                     />
                   ))}
                 </svg>
@@ -106,7 +106,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-end justify-between">
               <span className="text-sm font-mono text-artitude-text">LATEST SCORE</span>
               <div className="text-3xl font-mono font-bold text-artitude-red">
@@ -116,14 +116,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
           </motion.div>
 
           {/* Most Recent Critique */}
-          <motion.div 
+          <motion.div
             whileHover={{ y: -4 }}
             onClick={() => stats.last_review && onNavigate('workspace')}
             className={`bg-artitude-canvas p-8 relative overflow-visible group flex flex-col justify-between border border-[#1A1A1A]/10 h-64 ${stats.last_review ? 'cursor-pointer' : ''}`}
           >
             <CropMarks />
             <h4 className="text-xs font-general font-medium text-artitude-muted uppercase tracking-widest mb-4">Most Recent Critique</h4>
-            
+
             {stats.last_review ? (
               <div className="flex flex-col justify-between h-full">
                 <div className="mt-2">
@@ -143,7 +143,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
           </motion.div>
 
           {/* Needs Attention */}
-          <motion.div 
+          <motion.div
             whileHover={{ y: -4 }}
             onClick={() => {
               if (stats.active_guidelines === 0 || brandKit?.is_stale) onNavigate('guidelines');
@@ -153,7 +153,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
           >
             <CropMarks />
             <h4 className="text-xs font-general font-medium text-artitude-muted uppercase tracking-widest mb-4">Needs Attention</h4>
-            
+
             <div className="flex-grow flex flex-col justify-center gap-4">
               {stats.active_guidelines === 0 ? (
                 <>
@@ -186,7 +186,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projectId, onNavigate }) =
 
         <motion.div variants={itemVariants}>
           <h2 className="text-2xl font-fraunces text-artitude-text mb-8 tracking-wide">Recent Activity</h2>
-          
+
           <div className="bg-transparent border border-artitude-text/10 p-20 flex items-center justify-center text-center relative overflow-hidden">
             <CropMarks />
             <div className="relative z-10">
